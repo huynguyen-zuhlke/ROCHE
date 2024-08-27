@@ -1,9 +1,5 @@
 import os
-from time import strftime
-from tkinter import LabelFrame
-from large_image.tilesource import base
 from tifffile import TiffFile, TiffWriter
-from PIL import Image
 
 def convert(input_path):
     output_path = os.path.splitext(input_path)[0] + ".tif"
@@ -28,13 +24,13 @@ def convert(input_path):
         if s.name == "Baseline":
             baseline = s
 
+
     if(label != None):
         label_data = label.asarray()
 
         label_frame = label.keyframe
         label_xmp = label_frame.tags[700]
         label_xmp_bytes = label_xmp.value
-    
 
         tif.write(
             label_data,
@@ -52,7 +48,7 @@ def convert(input_path):
             ],
             metadata=None,
             # software (TIFFTag 305) must start with "ScanOutputManager" otherwise TIFFFILE won't recognize it as bif file
-            software="ScanOutputManager 1.1.0.15854",
+            software=label_frame.software,
             datetime= label_frame.datetime.strftime("%Y:%m:%d %H:%M:%S") if label_frame.datetime is not None else None,
         )
 
@@ -82,7 +78,7 @@ def convert(input_path):
             # metadata doesn't seem to be necessary
             metadata=None,
             datetime= thumbnail_frame.datetime.strftime("%Y:%m:%d %H:%M:%S") if thumbnail_frame.datetime is not None else None,
-            software="ScanOutputManager 1.1.0.15854",
+            software=thumbnail_frame.software
         )
 
     if baseline is not None:
@@ -95,9 +91,7 @@ def convert(input_path):
 
             icc_bytes = baseline.levels[0].keyframe.tags[34675].value
             icc_bytes_count = baseline.levels[0].keyframe.tags[34675].valuebytecount
-            extra_tags = [
-                # (306, 's', len(date_time), date_time, True)
-            ]
+            extra_tags = []
             if level == base_level:
                 extra_tags.append((34675, 'B', icc_bytes_count, icc_bytes, True))
 
@@ -122,8 +116,7 @@ def convert(input_path):
                 datetime= level_frame.datetime.strftime("%Y:%m:%d %H:%M:%S") if level_frame.datetime is not None else None,
                 extratags=extra_tags,
                 maxworkers=6,
-                # software (TIFFTag 305) must start with "ScanOutputManager" otherwise TIFFFILE won't recognize it as bif file
-                software="ScanOutputManager 1.1.0.15854"
+                software=level_frame.software
             )
     
     print("Done")
